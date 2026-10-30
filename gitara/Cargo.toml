@@ -1,0 +1,13 @@
+[package]
+name = "gitara"
+version = "0.1.0"
+edition = "2021"
+description = "Thitho Gĩtara: Package & Module Manager for the Gikuyu offline ecosystem"
+authors = ["Thitho Ecosystem Maintainers"]
+license = "MIT"
+
+[dependencies]
+clap = { version = "4.4", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thitho-tokenizer = { path = "../core/rust_tokenizer" }
