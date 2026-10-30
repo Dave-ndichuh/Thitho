@@ -15,6 +15,7 @@ class ThithoSyncEngine extends EventTarget {
   private status: ConnectionState = "disconnected";
   private isChecking: boolean = false;
   private timer: any = null;
+  private hasPreWarmed: boolean = false;
   private pendingOutboxCount: number = 0;
 
   constructor() {
@@ -54,11 +55,13 @@ class ThithoSyncEngine extends EventTarget {
     try {
       const res = await fetch("/api/bridge/health", { cache: "no-store" });
       if (res.ok) {
-        const data = await res.json();
         this.setStatus("connected");
 
-        // Pre-warm local cache on initial connection if needed
-        await this.preWarmLocalCache();
+        // Pre-warm local cache ONCE upon connection
+        if (!this.hasPreWarmed) {
+          this.hasPreWarmed = true;
+          await this.preWarmLocalCache();
+        }
 
         // Process any queued actions in outbox
         await this.flushOutbox();

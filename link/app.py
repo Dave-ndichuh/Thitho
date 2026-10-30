@@ -57,27 +57,27 @@ graphql_bridge = ThithoGraphQLBridge(db=db)
 # -------------------------------------------------------------
 
 class TranslateRequest(BaseModel):
-    text: str = Field(..., example="Mũrĩmi nĩ ahandaga mbembe.")
-    source_lang: str = Field("kik_Latn", example="kik_Latn")
-    target_lang: str = Field("eng_Latn", example="eng_Latn")
+    text: str = Field(..., examples=["Mũrĩmi nĩ ahandaga mbembe."])
+    source_lang: str = Field("kik_Latn", examples=["kik_Latn"])
+    target_lang: str = Field("eng_Latn", examples=["eng_Latn"])
 
 
 class TTSRequest(BaseModel):
-    text: str = Field(..., example="Mũrĩmi nĩ ahandaga mbembe rĩrĩa mbura yagia.")
+    text: str = Field(..., examples=["Mũrĩmi nĩ ahandaga mbembe rĩrĩa mbura yagia."])
     return_audio_stream: bool = Field(False, description="If True, returns audio/wav binary stream")
 
 
 class STTRequest(BaseModel):
-    audio_path_or_id: str = Field(..., example="cv_kik_001.wav")
+    audio_path_or_id: str = Field(..., examples=["cv_kik_001.wav"])
 
 
 class AgriQueryRequest(BaseModel):
-    crop: str = Field(..., example="mbembe")
-    symptoms: str = Field(..., example="mathangũ mahũndũkĩte")
+    crop: str = Field(..., examples=["mbembe"])
+    symptoms: str = Field(..., examples=["mathangũ mahũndũkĩte"])
 
 
 class SmartHomeCommandRequest(BaseModel):
-    command: str = Field(..., example="Hinga mũrango wa nja")
+    command: str = Field(..., examples=["Hinga mũrango wa nja"])
 
 
 class GraphQLRequest(BaseModel):
