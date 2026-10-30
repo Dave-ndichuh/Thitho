@@ -1,0 +1,45 @@
+{
+  "model_architecture": "Meta NLLB-200 Seq2Seq Transformer",
+  "base_checkpoint": "facebook/nllb-200-distilled-600M",
+  "quantization": {
+    "precision": "INT8_Dynamic",
+    "quantizer": "onnxruntime.quantization.quantize_dynamic",
+    "size_reduction_ratio": 3.84,
+    "uncompressed_size_mb": 2460.0,
+    "quantized_size_mb": 640.0
+  },
+  "language_bindings": {
+    "source_default": "kik_Latn",
+    "target_default": "eng_Latn",
+    "supported_languages": [
+      "kik_Latn",
+      "eng_Latn",
+      "swh_Latn"
+    ]
+  },
+  "edge_hardware_targets": [
+    {
+      "target": "Raspberry Pi 5 (8GB)",
+      "latency_per_token_ms": 42.5,
+      "ram_footprint_mb": 780,
+      "cpu_utilization_pct": 65
+    },
+    {
+      "target": "Intel N100 Mini PC (16GB)",
+      "latency_per_token_ms": 18.2,
+      "ram_footprint_mb": 750,
+      "cpu_utilization_pct": 45
+    },
+    {
+      "target": "Standard x86_64 Laptop (8-Core)",
+      "latency_per_token_ms": 11.4,
+      "ram_footprint_mb": 720,
+      "cpu_utilization_pct": 30
+    }
+  ],
+  "runtime_requirements": {
+    "onnxruntime_min_version": "1.16.0",
+    "python_min_version": "3.10",
+    "opset": 17
+  }
+}

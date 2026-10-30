@@ -37,6 +37,24 @@ class TestTauraMugambo(unittest.TestCase):
         self.assertEqual(wav_bytes[:4], b"RIFF")
         self.assertEqual(wav_bytes[8:12], b"WAVE")
 
+    def test_onnx_quantization_stats(self):
+        from taura_mugambo.taura.onnx_converter import NLLBONNXConverter
+        converter = NLLBONNXConverter()
+        stats = converter.get_compression_stats()
+        self.assertEqual(stats["base_model"], "facebook/nllb-200-distilled-600M")
+        self.assertIn("74.0%", stats["footprint_reduction_pct"])
+        self.assertTrue(stats["offline_capable"])
+
+    def test_onnx_manifest_generation(self):
+        import tempfile
+        from pathlib import Path
+        from taura_mugambo.taura.onnx_converter import NLLBONNXConverter
+        converter = NLLBONNXConverter()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manifest_path = converter.generate_manifest(Path(tmpdir))
+            self.assertTrue(manifest_path.exists())
+            self.assertEqual(manifest_path.name, "thitho_nllb_manifest.json")
+
 
 if __name__ == "__main__":
     unittest.main()
