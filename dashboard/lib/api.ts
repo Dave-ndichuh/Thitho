@@ -617,3 +617,120 @@ export async function fetchSmartHomeDevices(): Promise<Record<string, any>> {
     ũrugarĩ: { name: "Temperature Sensor", value: "22.5°C", type: "sensor" },
   };
 }
+
+export interface MqttLogItem {
+  topic: string;
+  payload: any;
+  timestamp: number;
+  iso_time: string;
+}
+
+export async function toggleSmartHomeDevice(
+  device: string,
+  state: string
+): Promise<{ status: string; device: string; data: any }> {
+  // Optimistically set locally in IndexedDB
+  await setLocalSmartHomeDevice(device, state);
+
+  try {
+    const res = await fetch("/api/bridge/edge/smarthome/toggle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device, state }),
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    // If bridge is down, queue toggle in outbox!
+    await queueOutboxAction("SMARTHOME_COMMAND", { command: `${device}:${state}` });
+    return {
+      status: "QUEUED_OFFLINE",
+      device,
+      data: { state, queuedOffline: true },
+    };
+  }
+
+  return { status: "SUCCESS", device, data: { state } };
+}
+
+export async function fetchMqttLogs(): Promise<MqttLogItem[]> {
+  try {
+    const res = await fetch("/api/bridge/edge/smarthome/mqtt", { cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json();
+      return data.logs || [];
+    }
+  } catch (e) {
+    // fallback
+  }
+  return [];
+}
+
+export function createSmartHomeWebSocket(
+  onMessage: (msg: any) => void,
+  onStatusChange?: (connected: boolean) => void
+): { close: () => void; send: (msg: any) => void } {
+  if (typeof window === "undefined") {
+    return { close: () => {}, send: () => {} };
+  }
+
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  const host = window.location.hostname || "127.0.0.1";
+  const url = `${protocol}//${host}:8000/ws/smarthome`;
+
+  let ws: WebSocket | null = null;
+  let isClosed = false;
+  let reconnectTimeout: any = null;
+
+  function connect() {
+    if (isClosed) return;
+    try {
+      ws = new WebSocket(url);
+
+      ws.onopen = () => {
+        if (onStatusChange) onStatusChange(true);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          onMessage(data);
+        } catch (e) {
+          console.warn("WS parse error:", e);
+        }
+      };
+
+      ws.onclose = () => {
+        if (onStatusChange) onStatusChange(false);
+        if (!isClosed) {
+          reconnectTimeout = setTimeout(connect, 3000);
+        }
+      };
+
+      ws.onerror = () => {
+        if (ws) ws.close();
+      };
+    } catch (e) {
+      if (onStatusChange) onStatusChange(false);
+      if (!isClosed) {
+        reconnectTimeout = setTimeout(connect, 4000);
+      }
+    }
+  }
+
+  connect();
+
+  return {
+    close: () => {
+      isClosed = true;
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      if (ws) ws.close();
+    },
+    send: (msg: any) => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(msg));
+      }
+    },
+  };
+}

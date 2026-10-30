@@ -122,6 +122,33 @@ class TestThithoLink(unittest.TestCase):
         self.assertIn("transcription", data)
         self.assertTrue(data["confidence"] > 0.8)
 
+    def test_smarthome_toggle(self):
+        resp = self.client.post(
+            "/api/v1/edge/smarthome/toggle",
+            json={"device": "mũrango_wa_nja", "state": "UNLOCKED"},
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertEqual(data["data"]["state"], "UNLOCKED")
+
+    def test_smarthome_mqtt_logs(self):
+        resp = self.client.get("/api/v1/edge/smarthome/mqtt")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertIn("logs", data)
+
+    def test_smarthome_websocket(self):
+        with self.client.websocket_connect("/ws/smarthome") as ws:
+            init_msg = ws.receive_json()
+            self.assertEqual(init_msg["type"], "INIT")
+            self.assertIn("devices", init_msg)
+
+            # Send a command over websocket
+            ws.send_json({"type": "COMMAND", "command": "Hinga mũrango wa nja"})
+            resp = ws.receive_json()
+            self.assertEqual(resp["type"], "COMMAND_RESPONSE")
+            self.assertEqual(resp["result"]["action"], "DOOR_LOCK")
+
     def test_graphql_endpoint(self):
         query = '{ stats { totalWords totalParallelSentences } }'
         resp = self.client.post("/graphql", json={"query": query})

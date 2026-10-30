@@ -4,6 +4,7 @@ FastAPI & GraphQL server providing zero-cloud localized inference,
 translation, speech synthesis, and edge IoT routing for Gĩkũyũ applications.
 """
 
+import asyncio
 import io
 import sys
 from pathlib import Path
@@ -15,7 +16,7 @@ if hasattr(sys.stdout, "reconfigure"):
 if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8")
 
-from fastapi import FastAPI, HTTPException, Query, Response, status
+from fastapi import FastAPI, HTTPException, Query, Response, WebSocket, WebSocketDisconnect, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -53,6 +54,59 @@ smarthome = SmartHomeEdgeNode()
 graphql_bridge = ThithoGraphQLBridge(db=db)
 
 
+class SmartHomeWebSocketManager:
+    """Manages real-time WebSocket connections and broadcasts IoT state transitions."""
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+        self._loop: Optional[asyncio.AbstractEventLoop] = None
+
+    def set_loop(self, loop: asyncio.AbstractEventLoop):
+        self._loop = loop
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
+
+    async def broadcast(self, message: Dict[str, Any]):
+        disconnected = []
+        for connection in self.active_connections:
+            try:
+                await connection.send_json(message)
+            except Exception:
+                disconnected.append(connection)
+        for d in disconnected:
+            self.disconnect(d)
+
+    def broadcast_sync(self, message: Dict[str, Any]):
+        if not self.active_connections:
+            return
+        try:
+            loop = self._loop or asyncio.get_event_loop()
+            if loop.is_running():
+                asyncio.run_coroutine_threadsafe(self.broadcast(message), loop)
+        except Exception:
+            pass
+
+
+ws_manager = SmartHomeWebSocketManager()
+
+
+def on_device_changed(device_id: str, device_data: Dict[str, Any]):
+    ws_manager.broadcast_sync({
+        "type": "DEVICE_UPDATE",
+        "device": device_id,
+        "data": device_data,
+        "mqtt_logs": smarthome.get_mqtt_logs(),
+    })
+
+
+smarthome.register_listener(on_device_changed)
+
+
 # -------------------------------------------------------------
 # Request / Response Schemas
 # -------------------------------------------------------------
@@ -80,6 +134,11 @@ class AgriQueryRequest(BaseModel):
 
 class SmartHomeCommandRequest(BaseModel):
     command: str = Field(..., examples=["Hinga mũrango wa nja"])
+
+
+class SmartHomeToggleRequest(BaseModel):
+    device: str = Field(..., examples=["mũrango_wa_nja"])
+    state: str = Field(..., examples=["LOCKED"])
 
 
 class GraphQLRequest(BaseModel):
@@ -238,6 +297,48 @@ def command_smarthome(req: SmartHomeCommandRequest):
 @app.get("/api/v1/edge/smarthome/devices")
 def get_smarthome_devices():
     return smarthome.get_all_states()
+
+
+@app.post("/api/v1/edge/smarthome/toggle")
+def toggle_smarthome_device(req: SmartHomeToggleRequest):
+    res = smarthome.set_device_state(req.device, req.state)
+    if not res:
+        raise HTTPException(status_code=404, detail=f"Device '{req.device}' not found.")
+    return {"status": "SUCCESS", "device": req.device, "data": res}
+
+
+@app.get("/api/v1/edge/smarthome/mqtt")
+def get_smarthome_mqtt_logs():
+    logs = smarthome.get_mqtt_logs()
+    return {"count": len(logs), "logs": logs}
+
+
+@app.websocket("/ws/smarthome")
+async def websocket_smarthome_endpoint(websocket: WebSocket):
+    ws_manager.set_loop(asyncio.get_running_loop())
+    await ws_manager.connect(websocket)
+    try:
+        # Initial greeting with current IoT snapshot
+        await websocket.send_json({
+            "type": "INIT",
+            "devices": smarthome.get_all_states(),
+            "mqtt_logs": smarthome.get_mqtt_logs(),
+        })
+        while True:
+            data = await websocket.receive_json()
+            msg_type = data.get("type")
+            if msg_type == "COMMAND":
+                cmd = data.get("command", "")
+                res = smarthome.process_command(cmd)
+                await websocket.send_json({"type": "COMMAND_RESPONSE", "result": res})
+            elif msg_type == "TOGGLE":
+                dev = data.get("device", "")
+                st = data.get("state", "")
+                updated = smarthome.set_device_state(dev, st)
+                if updated:
+                    await websocket.send_json({"type": "TOGGLE_ACK", "device": dev, "data": updated})
+    except (WebSocketDisconnect, Exception):
+        ws_manager.disconnect(websocket)
 
 
 # -------------------------------------------------------------
