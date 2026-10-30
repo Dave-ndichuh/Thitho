@@ -311,3 +311,14 @@ export async function removeOutboxItem(id: number) {
   const db = await getDB();
   await db.delete("outbox", id);
 }
+
+export async function getMetadata<T = any>(key: string): Promise<T | undefined> {
+  const db = await getDB();
+  const rec = await db.get("metadata", key);
+  return rec ? rec.value : undefined;
+}
+
+export async function setMetadata(key: string, value: any): Promise<void> {
+  const db = await getDB();
+  await db.put("metadata", { key, value });
+}

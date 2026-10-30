@@ -6,6 +6,7 @@ translation, speech synthesis, and edge IoT routing for Gĩkũyũ applications.
 
 import io
 import sys
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 # Ensure UTF-8 output on Windows consoles
@@ -68,7 +69,8 @@ class TTSRequest(BaseModel):
 
 
 class STTRequest(BaseModel):
-    audio_path_or_id: str = Field(..., examples=["cv_kik_001.wav"])
+    audio_path_or_id: Optional[str] = Field(None, examples=["cv_kik_001.wav"])
+    audio_base64: Optional[str] = Field(None, description="Base64 encoded audio bytes")
 
 
 class AgriQueryRequest(BaseModel):
@@ -170,6 +172,25 @@ def get_audio_corpus(limit: int = 50):
     return {"count": len(items), "results": items}
 
 
+@app.get("/api/v1/audio/{audio_id}/wav")
+def get_audio_wav(audio_id: int):
+    item = db.get_audio_by_id(audio_id)
+    if not item:
+        raise HTTPException(status_code=404, detail=f"Audio sample #{audio_id} not found in Ikũmbi.")
+
+    p = Path(item["audio_path"])
+    if p.exists() and p.is_file():
+        return Response(content=p.read_bytes(), media_type="audio/wav")
+
+    res = speech_engine.synthesize_speech(item["normalized_text"])
+    filename = Path(item["audio_path"]).name
+    return Response(
+        content=res["wav_bytes"],
+        media_type="audio/wav",
+        headers={"Content-Disposition": f"inline; filename={filename}"},
+    )
+
+
 @app.post("/api/v1/tts")
 def text_to_speech(req: TTSRequest):
     res = speech_engine.synthesize_speech(req.text)
@@ -194,7 +215,9 @@ def text_to_speech(req: TTSRequest):
 
 @app.post("/api/v1/stt")
 def speech_to_text(req: STTRequest):
-    return speech_engine.transcribe_audio(req.audio_path_or_id)
+    if req.audio_base64:
+        return speech_engine.transcribe_base64(req.audio_base64)
+    return speech_engine.transcribe_audio(req.audio_path_or_id or "cv_kik_001.wav")
 
 
 @app.post("/api/v1/edge/agriculture")

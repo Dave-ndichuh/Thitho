@@ -365,6 +365,14 @@ class IkumbiDB:
             cur.execute(query)
             return [dict(r) for r in cur.fetchall()]
 
+    def get_audio_by_id(self, audio_id: int) -> Optional[Dict[str, Any]]:
+        """Fetch a single audio recording by ID."""
+        with self.get_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT * FROM audio_corpus WHERE id = ?", (audio_id,))
+            row = cur.fetchone()
+            return dict(row) if row else None
+
     # -------------------------------------------------------------
     # Summary Statistics & Exports
     # -------------------------------------------------------------

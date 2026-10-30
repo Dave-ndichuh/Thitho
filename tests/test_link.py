@@ -87,6 +87,41 @@ class TestThithoLink(unittest.TestCase):
         self.assertIn("results", data)
         self.assertTrue(len(data["results"]) > 0)
 
+    def test_tts_audio_stream(self):
+        resp = self.client.post(
+            "/api/v1/tts",
+            json={"text": "Mũrĩmi", "return_audio_stream": True},
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.headers.get("content-type"), "audio/wav")
+        self.assertTrue(resp.content.startswith(b"RIFF"))
+
+    def test_audio_wav_stream(self):
+        resp = self.client.get("/api/v1/audio/1/wav")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.headers.get("content-type"), "audio/wav")
+        self.assertTrue(resp.content.startswith(b"RIFF"))
+
+    def test_stt_endpoint(self):
+        resp = self.client.post(
+            "/api/v1/stt",
+            json={"audio_path_or_id": "cv_kik_001.wav"},
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertIn("transcription", data)
+        self.assertTrue(data["tonal_verified"])
+
+    def test_stt_base64_endpoint(self):
+        resp = self.client.post(
+            "/api/v1/stt",
+            json={"audio_base64": "UklGRgAAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="},
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertIn("transcription", data)
+        self.assertTrue(data["confidence"] > 0.8)
+
     def test_graphql_endpoint(self):
         query = '{ stats { totalWords totalParallelSentences } }'
         resp = self.client.post("/graphql", json={"query": query})
