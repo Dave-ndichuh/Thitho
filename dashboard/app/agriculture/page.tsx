@@ -1,70 +1,52 @@
 "use client";
 
-import React, { useState } from "react";
-import { Sprout, Sun, CloudRain, Thermometer, ShieldCheck, AlertCircle, Sparkles } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Sprout, CloudRain, ShieldCheck, AlertCircle, Sparkles, RefreshCw, HardDrive, Cpu } from "lucide-react";
+import { executeCropDiagnosis, fetchAgriculturalSeasons, AgriDiagnosisResponse } from "@/lib/api";
 
 export default function AgriculturePage() {
   const [selectedCrop, setSelectedCrop] = useState("mbembe");
   const [symptomInput, setSymptomInput] = useState("mathangũ marĩa mahũndũkĩte");
-  const [diagnosis, setDiagnosis] = useState<any>({
+  const [isDiagnosing, setIsDiagnosing] = useState(false);
+  const [seasons, setSeasons] = useState<any[]>([]);
+
+  const [diagnosis, setDiagnosis] = useState<AgriDiagnosisResponse>({
     crop: "Mbembe (Maize)",
-    diagnosis_kik: "Mũrimũ wa mathangũ kũhũndũka (Nitrogen deficiency / Maize Chlorosis)",
-    treatment_kik: "Ĩkĩra ndoogo ya ng'ombe kana mbolea ya CAN thĩinĩ wa makinya ma centimita 10 kuuma mũtĩ-inĩ.",
-    treatment_eng: "Apply cattle manure or CAN nitrogen booster 10cm away from the stalk.",
+    diagnosis_gikuyu: "Mũrimũ wa mathangũ kũhũndũka (Nitrogen deficiency / Maize Chlorosis)",
+    treatment_gikuyu: "Ĩkĩra ndoogo ya ng'ombe kana mbolea ya CAN thĩinĩ wa makinya ma centimita 10 kuuma mũtĩ-inĩ.",
+    treatment_english: "Apply cattle manure or CAN nitrogen booster 10cm away from the stalk.",
     confidence: "94%",
+    status: "DIAGNOSIS_MATCHED",
   });
 
-  const handleDiagnose = () => {
-    if (selectedCrop === "kahua") {
-      setDiagnosis({
-        crop: "Kahua (Coffee)",
-        diagnosis_kik: "Mũrimũ wa Mahindi ma Kahua (Coffee Berry Disease - CBD)",
-        treatment_kik: "Huura ndawa ya thaba (copper fungicide) rĩrĩa mathangũ maratuta mĩtĩ.",
-        treatment_eng: "Spray approved copper-based fungicide at the onset of flowering and rains.",
-        confidence: "96%",
-      });
-    } else if (selectedCrop === "macani") {
-      setDiagnosis({
-        crop: "Macani (Tea)",
-        diagnosis_kik: "Tũsamũ twa Macani (Red Crevice Mites)",
-        treatment_kik: "Eheria macani maria mahũũrĩtwo nĩguo tũsamũ tũtĩgathemee kũndũ kũngĩ.",
-        treatment_eng: "Prune affected tea bushes and maintain clean buffer strips.",
-        confidence: "92%",
-      });
-    } else {
-      setDiagnosis({
-        crop: "Mbembe (Maize)",
-        diagnosis_kik: "Mũrimũ wa mathangũ kũhũndũka (Nitrogen deficiency / Maize Chlorosis)",
-        treatment_kik: "Ĩkĩra ndoogo ya ng'ombe kana mbolea ya CAN thĩinĩ wa makinya ma centimita 10 kuuma mũtĩ-inĩ.",
-        treatment_eng: "Apply cattle manure or CAN nitrogen booster 10cm away from the stalk.",
-        confidence: "94%",
-      });
+  // Load live seasons on mount
+  useEffect(() => {
+    async function loadSeasons() {
+      const data = await fetchAgriculturalSeasons();
+      const list = Object.entries(data).map(([key, val]: [string, any]) => ({
+        id: key,
+        kik: val.name?.split("(")[0]?.trim() || key,
+        eng: val.name?.includes("(") ? val.name.split("(")[1]?.replace(")", "") : "",
+        crops: Array.isArray(val.crops) ? val.crops.join(", ") : val.crops || "",
+        advice: val.advice_kik || "",
+        active: key === "njahi",
+      }));
+      if (list.length > 0) {
+        setSeasons(list);
+      }
+    }
+    loadSeasons();
+  }, []);
+
+  const handleDiagnose = async () => {
+    setIsDiagnosing(true);
+    try {
+      const res = await executeCropDiagnosis(selectedCrop, symptomInput);
+      setDiagnosis(res);
+    } finally {
+      setIsDiagnosing(false);
     }
   };
-
-  const seasons = [
-    {
-      kik: "Kĩmera kĩa Njahĩ",
-      eng: "Long Rains Season (March - May)",
-      crops: "Mbembe, Njahĩ, Thukũma, Warũ",
-      advice: "Handa mbembe thĩinĩ wa tĩĩri ũiyũrĩte biũ na mũtutu wa mbũri.",
-      active: true,
-    },
-    {
-      kik: "Thano",
-      eng: "Cold / Harvest Season (June - August)",
-      crops: "Macani, Kahua (Pruning)",
-      advice: "Bithia tĩĩri na nyeki nĩguo ũrugarĩ na maĩ itigatũũke.",
-      active: false,
-    },
-    {
-      kik: "Kĩmera kĩa Mwere",
-      eng: "Short Rains Season (October - December)",
-      crops: "Mwere, Mboco, Kahua",
-      advice: "Handa mboco na mwere iria itabatara maĩ maingĩ mũno.",
-      active: false,
-    },
-  ];
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
@@ -78,7 +60,7 @@ export default function AgriculturePage() {
             </h1>
           </div>
           <p className="text-xs text-zinc-400 mt-1">
-            Offline crop health diagnostic and seasonal agronomy assistant for smallholder farmers.
+            Offline crop health diagnostic and seasonal agronomy assistant for smallholder farmers in Central Kenya.
           </p>
         </div>
 
@@ -96,9 +78,9 @@ export default function AgriculturePage() {
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {seasons.map((s, idx) => (
+          {seasons.map((s) => (
             <div
-              key={idx}
+              key={s.id}
               className={`p-5 rounded-2xl border transition-all space-y-2.5 shadow ${
                 s.active
                   ? "bg-emerald-950/30 border-emerald-600/60 shadow-emerald-950/20"
@@ -129,10 +111,10 @@ export default function AgriculturePage() {
         <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-amber-400" />
-            <h2 className="text-base font-bold text-white">Crop Health Diagnostic Node</h2>
+            <h2 className="text-base font-bold text-white">Live Crop Health Diagnostic Node</h2>
           </div>
           <span className="text-xs px-2 py-0.5 rounded bg-zinc-900 text-zinc-400 font-mono border border-zinc-800">
-            Offline Expert System
+            FastAPI Edge Bridge / IndexedDB
           </span>
         </div>
 
@@ -160,17 +142,27 @@ export default function AgriculturePage() {
               <textarea
                 value={symptomInput}
                 onChange={(e) => setSymptomInput(e.target.value)}
-                placeholder="Taũra ũrĩa mathangũ kana matunda matarĩĩ..."
+                placeholder="Taũra ũrĩa mathangũ kana matunda matarĩĩ (e.g., 'mathangũ mahũndũkĩte', 'mũtwe mũirũ')..."
                 className="w-full h-24 bg-[#131c13] border border-zinc-700/60 rounded-xl p-3 text-sm text-zinc-100 focus:outline-none focus:border-emerald-500 resize-none font-medium"
               />
             </div>
 
             <button
               onClick={handleDiagnose}
+              disabled={isDiagnosing}
               className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow"
             >
-              <Sparkles className="w-4 h-4 text-amber-300" />
-              <span>Diagnose Condition (Thuthuria)</span>
+              {isDiagnosing ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin text-amber-300" />
+                  <span>Evaluating Telemetry...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 text-amber-300" />
+                  <span>Diagnose Condition (Thuthuria)</span>
+                </>
+              )}
             </button>
           </div>
 
@@ -182,28 +174,29 @@ export default function AgriculturePage() {
                 <span className="text-xs font-mono text-emerald-400">Confidence: {diagnosis.confidence}</span>
               </div>
 
-              <h3 className="text-base font-bold text-white">{diagnosis.diagnosis_kik}</h3>
+              <h3 className="text-base font-bold text-white">{diagnosis.diagnosis_gikuyu}</h3>
 
               <div className="space-y-2 pt-2">
                 <div className="p-3 rounded-lg bg-zinc-900/80 border border-zinc-800 space-y-1">
                   <span className="text-[11px] font-mono text-amber-400 uppercase block font-semibold">
                     Treatment in Gĩkũyũ:
                   </span>
-                  <p className="text-xs text-zinc-200">{diagnosis.treatment_kik}</p>
+                  <p className="text-xs text-zinc-200">{diagnosis.treatment_gikuyu}</p>
                 </div>
 
                 <div className="p-3 rounded-lg bg-zinc-900/40 border border-zinc-800 space-y-1">
                   <span className="text-[11px] font-mono text-zinc-400 uppercase block font-semibold">
                     English Guidance:
                   </span>
-                  <p className="text-xs text-zinc-400">{diagnosis.treatment_eng}</p>
+                  <p className="text-xs text-zinc-400">{diagnosis.treatment_english}</p>
                 </div>
               </div>
             </div>
 
-            <p className="text-[10px] text-zinc-500 font-mono border-t border-zinc-900 pt-2">
-              Diagnosis computed locally on edge hardware via Thitho Agricultural Model.
-            </p>
+            <div className="flex items-center justify-between border-t border-zinc-900 pt-2 text-[10px] text-zinc-500 font-mono">
+              <span>Status: {diagnosis.status}</span>
+              <span>Computed locally on edge hardware</span>
+            </div>
           </div>
         </div>
       </div>

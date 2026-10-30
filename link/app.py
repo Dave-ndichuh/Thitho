@@ -147,6 +147,29 @@ def search_dictionary(q: str = Query(..., description="Query search term"), limi
     return {"query": q, "count": len(results), "results": results}
 
 
+@app.get("/api/v1/parallel")
+def get_parallel_corpus(
+    q: Optional[str] = Query(None, description="Search parallel corpus text"),
+    domain: Optional[str] = Query(None, description="Filter by domain"),
+    limit: int = 50,
+):
+    if q and q.strip():
+        items = db.search_parallel(q.strip(), limit=limit)
+    else:
+        items = db.get_parallel_dataset(limit=limit)
+
+    if domain and domain != "all":
+        items = [item for item in items if item.get("domain") == domain]
+
+    return {"count": len(items), "results": items}
+
+
+@app.get("/api/v1/audio")
+def get_audio_corpus(limit: int = 50):
+    items = db.get_audio_dataset(limit=limit)
+    return {"count": len(items), "results": items}
+
+
 @app.post("/api/v1/tts")
 def text_to_speech(req: TTSRequest):
     res = speech_engine.synthesize_speech(req.text)

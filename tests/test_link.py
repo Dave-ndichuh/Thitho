@@ -73,6 +73,20 @@ class TestThithoLink(unittest.TestCase):
         data = resp.json()
         self.assertEqual(data["status"], "DIAGNOSIS_MATCHED")
 
+    def test_parallel_endpoint(self):
+        resp = self.client.get("/api/v1/parallel")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertIn("results", data)
+        self.assertTrue(len(data["results"]) > 0)
+
+    def test_audio_endpoint(self):
+        resp = self.client.get("/api/v1/audio")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertIn("results", data)
+        self.assertTrue(len(data["results"]) > 0)
+
     def test_graphql_endpoint(self):
         query = '{ stats { totalWords totalParallelSentences } }'
         resp = self.client.post("/graphql", json={"query": query})

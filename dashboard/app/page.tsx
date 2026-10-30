@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { 
   Database, 
@@ -12,31 +12,57 @@ import {
   Package, 
   ArrowRight, 
   Sparkles, 
-  CheckCircle, 
   Zap, 
-  Terminal, 
-  ShieldCheck 
+  RefreshCw,
+  HardDrive
 } from "lucide-react";
+import { executeTranslation } from "@/lib/api";
 
 export default function HomePage() {
   const [quickInput, setQuickInput] = useState("Mũrĩmi nĩ ahandaga mbembe.");
   const [quickOutput, setQuickOutput] = useState("The farmer plants maize when the rain comes.");
   const [isTranslating, setIsTranslating] = useState(false);
+  const [engineUsed, setEngineUsed] = useState("thitho_exact_memory");
 
-  const handleTranslate = () => {
-    setIsTranslating(true);
-    setTimeout(() => {
-      if (quickInput.toLowerCase().includes("mũrango")) {
-        setQuickOutput("Securely lock the exterior door.");
-      } else if (quickInput.toLowerCase().includes("tawa")) {
-        setQuickOutput("Switch on the light in the house.");
-      } else if (quickInput.toLowerCase().includes("kahua")) {
-        setQuickOutput("Coffee farmers are harvesting quality berries.");
-      } else {
-        setQuickOutput("The farmer cultivates crops when the rain falls upon the land.");
+  const [stats, setStats] = useState({
+    words: 18,
+    definitions: 20,
+    parallel: 15,
+    audio: 5,
+  });
+
+  useEffect(() => {
+    async function loadStats() {
+      try {
+        const res = await fetch("/api/bridge/health");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.database_stats) {
+            setStats({
+              words: data.database_stats.total_words,
+              definitions: data.database_stats.total_definitions,
+              parallel: data.database_stats.total_parallel_sentences,
+              audio: data.database_stats.total_audio_utterances,
+            });
+          }
+        }
+      } catch (e) {
+        // Use default
       }
+    }
+    loadStats();
+  }, []);
+
+  const handleTranslate = async () => {
+    if (!quickInput.trim()) return;
+    setIsTranslating(true);
+    try {
+      const res = await executeTranslation(quickInput, "kik_Latn", "eng_Latn");
+      setQuickOutput(res.translated_text);
+      setEngineUsed(res.engine);
+    } finally {
       setIsTranslating(false);
-    }, 200);
+    }
   };
 
   const phases = [
@@ -99,7 +125,7 @@ export default function HomePage() {
         <div className="relative z-10 max-w-3xl space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-700/40 text-xs font-mono text-emerald-300">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>Project Definition: Complete Offline Ecosystem</span>
+            <span>Milestone 1 Active: Live Data Plumbing & Offline State</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
@@ -143,17 +169,39 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Live Corpus Metrics Summary */}
+      <section className="grid grid-cols-2 md:grid-cols-4 gap-4 font-mono text-center">
+        <div className="p-4 rounded-2xl border border-zinc-800 bg-[#0e140e]">
+          <span className="text-2xl font-bold text-emerald-400 block">{stats.words}</span>
+          <span className="text-xs text-zinc-400">Headwords (Ciugo)</span>
+        </div>
+        <div className="p-4 rounded-2xl border border-zinc-800 bg-[#0e140e]">
+          <span className="text-2xl font-bold text-emerald-400 block">{stats.definitions}</span>
+          <span className="text-xs text-zinc-400">Definitions & Senses</span>
+        </div>
+        <div className="p-4 rounded-2xl border border-zinc-800 bg-[#0e140e]">
+          <span className="text-2xl font-bold text-amber-300 block">{stats.parallel}</span>
+          <span className="text-xs text-zinc-400">Parallel Sentences</span>
+        </div>
+        <div className="p-4 rounded-2xl border border-zinc-800 bg-[#0e140e]">
+          <span className="text-2xl font-bold text-purple-400 block">{stats.audio}</span>
+          <span className="text-xs text-zinc-400">Common Voice Utterances</span>
+        </div>
+      </section>
+
       {/* Quick Interactive Translator Card */}
       <section className="rounded-2xl border border-zinc-800 bg-[#0e140e] p-6 shadow-xl">
         <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
           <div className="flex items-center gap-2.5">
             <Languages className="w-5 h-5 text-emerald-400" />
-            <h2 className="text-base font-bold text-white">Interactive Translation (Taũra Direct)</h2>
+            <h2 className="text-base font-bold text-white">Live Translation (Taũra Direct)</h2>
             <span className="text-xs px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-mono">
               kik_Latn ⇄ eng_Latn
             </span>
           </div>
-          <span className="text-xs text-zinc-500 font-mono hidden sm:inline">Meta NLLB-200 Hybrid</span>
+          <span className="text-xs text-zinc-400 font-mono hidden sm:inline flex items-center gap-1">
+            Engine: {engineUsed}
+          </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
@@ -195,7 +243,14 @@ export default function HomePage() {
                 disabled={isTranslating}
                 className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center gap-2 shadow"
               >
-                {isTranslating ? "Translating..." : "Translate (Taũra)"}
+                {isTranslating ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Translating...</span>
+                  </>
+                ) : (
+                  <span>Translate (Taũra)</span>
+                )}
               </button>
             </div>
           </div>

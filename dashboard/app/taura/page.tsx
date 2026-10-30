@@ -1,50 +1,43 @@
 "use client";
 
 import React, { useState } from "react";
-import { Languages, ArrowLeftRight, Copy, Check, Sparkles, Layers, Cpu } from "lucide-react";
+import { Languages, ArrowLeftRight, Copy, Check, Sparkles, Cpu, RefreshCw, HardDrive } from "lucide-react";
+import { executeTranslation, TranslationResponse } from "@/lib/api";
 
 export default function TauraPage() {
-  const [sourceLang, setSourceLang] = useState<"kik" | "eng">("kik");
+  const [sourceLang, setSourceLang] = useState<"kik_Latn" | "eng_Latn">("kik_Latn");
   const [inputText, setInputText] = useState("Mũrĩmi nĩ ahandaga mbembe rĩrĩa mbura yagia.");
   const [outputText, setOutputText] = useState("The farmer plants maize when the rain comes.");
   const [isTranslating, setIsTranslating] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  const [translationMeta, setTranslationMeta] = useState<Partial<TranslationResponse>>({
+    confidence: 0.99,
+    engine: "thitho_exact_memory",
+    fromCache: false,
+  });
+
   const swapLanguages = () => {
-    setSourceLang(sourceLang === "kik" ? "eng" : "kik");
+    setSourceLang(sourceLang === "kik_Latn" ? "eng_Latn" : "kik_Latn");
     setInputText(outputText);
     setOutputText(inputText);
   };
 
-  const handleTranslate = () => {
+  const handleTranslate = async () => {
+    if (!inputText.trim()) return;
     setIsTranslating(true);
-    setTimeout(() => {
-      const lower = inputText.toLowerCase();
-      if (sourceLang === "kik") {
-        if (lower.includes("mũrango")) {
-          setOutputText("Securely close and lock the exterior entrance door.");
-        } else if (lower.includes("tawa")) {
-          setOutputText("Switch on the light so the household is illuminated.");
-        } else if (lower.includes("kahua")) {
-          setOutputText("The coffee crop is yielding a bountiful harvest this season.");
-        } else if (lower.includes("mũgũnda")) {
-          setOutputText("This farm requires soil testing to evaluate fertility.");
-        } else {
-          setOutputText("The farmer plants maize when the rain comes.");
-        }
-      } else {
-        if (lower.includes("door") || lower.includes("lock")) {
-          setOutputText("Hinga mũrango wa nja.");
-        } else if (lower.includes("light")) {
-          setOutputText("Aria tawa wa nyũmba.");
-        } else if (lower.includes("coffee")) {
-          setOutputText("Aria kahua nĩ marona ũtonga mũingĩ.");
-        } else {
-          setOutputText("Mũrĩmi nĩ ahandaga mbembe rĩrĩa mbura yagia.");
-        }
-      }
+    try {
+      const targetLang = sourceLang === "kik_Latn" ? "eng_Latn" : "kik_Latn";
+      const res = await executeTranslation(inputText, sourceLang, targetLang);
+      setOutputText(res.translated_text);
+      setTranslationMeta({
+        confidence: res.confidence,
+        engine: res.engine,
+        fromCache: res.fromCache,
+      });
+    } finally {
       setIsTranslating(false);
-    }, 200);
+    }
   };
 
   const copyToClipboard = () => {
@@ -53,7 +46,7 @@ export default function TauraPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Simulated sub-word tokens
+  // Sub-word tokenization preview
   const sampleTokens = inputText.split(" ").map((word, i) => ({
     id: i + 1,
     token: word,
@@ -69,7 +62,7 @@ export default function TauraPage() {
           <h1 className="text-2xl font-bold text-white tracking-tight">Thitho Taũra (Translation Studio)</h1>
         </div>
         <p className="text-xs text-zinc-400 mt-1">
-          Bi-directional neural translation between Gĩkũyũ (kik_Latn) and English (eng_Latn) using Meta NLLB-200.
+          Bi-directional neural translation between Gĩkũyũ (kik_Latn) and English (eng_Latn) with IndexedDB offline persistence.
         </p>
       </div>
 
@@ -78,7 +71,7 @@ export default function TauraPage() {
         <div className="flex items-center gap-2">
           <span className="text-xs font-mono uppercase text-zinc-400">Source:</span>
           <span className="text-sm font-bold text-white">
-            {sourceLang === "kik" ? "Gĩkũyũ (kik_Latn)" : "English (eng_Latn)"}
+            {sourceLang === "kik_Latn" ? "Gĩkũyũ (kik_Latn)" : "English (eng_Latn)"}
           </span>
         </div>
 
@@ -93,7 +86,7 @@ export default function TauraPage() {
         <div className="flex items-center gap-2">
           <span className="text-xs font-mono uppercase text-zinc-400">Target:</span>
           <span className="text-sm font-bold text-white">
-            {sourceLang === "kik" ? "English (eng_Latn)" : "Gĩkũyũ (kik_Latn)"}
+            {sourceLang === "kik_Latn" ? "English (eng_Latn)" : "Gĩkũyũ (kik_Latn)"}
           </span>
         </div>
       </div>
@@ -112,7 +105,7 @@ export default function TauraPage() {
           </div>
 
           {/* Virtual Diacritics Keypad */}
-          {sourceLang === "kik" && (
+          {sourceLang === "kik_Latn" && (
             <div className="flex items-center gap-2 p-2 rounded-xl bg-zinc-900/60 border border-zinc-800">
               <span className="text-[11px] font-mono text-zinc-500 uppercase px-1">Diacritics:</span>
               <div className="flex flex-wrap gap-1.5">
@@ -134,8 +127,17 @@ export default function TauraPage() {
             disabled={isTranslating}
             className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-950/40"
           >
-            <Sparkles className="w-4 h-4 text-amber-300" />
-            <span>{isTranslating ? "Translating..." : "Execute Translation"}</span>
+            {isTranslating ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin text-amber-300" />
+                <span>Translating via Bridge...</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 text-amber-300" />
+                <span>Execute Translation (Taũra)</span>
+              </>
+            )}
           </button>
         </div>
 
@@ -156,15 +158,18 @@ export default function TauraPage() {
           <div className="p-3 rounded-xl bg-zinc-900/40 border border-zinc-800/80 text-xs space-y-1 font-mono">
             <div className="flex justify-between text-zinc-400">
               <span>Foundation Model:</span>
-              <span className="text-zinc-200">Meta NLLB-200-Distilled</span>
+              <span className="text-zinc-200">Meta NLLB-200 Hybrid</span>
             </div>
             <div className="flex justify-between text-zinc-400">
-              <span>Execution Engine:</span>
-              <span className="text-emerald-400">Local Offline Memory & Hybrid BPE</span>
+              <span>Active Engine:</span>
+              <span className="text-emerald-400 flex items-center gap-1">
+                {translationMeta.fromCache && <HardDrive className="w-3 h-3 text-amber-400" />}
+                {translationMeta.engine || "NLLB"}
+              </span>
             </div>
             <div className="flex justify-between text-zinc-400">
               <span>Confidence Score:</span>
-              <span className="text-amber-300">0.98</span>
+              <span className="text-amber-300">{translationMeta.confidence || "0.98"}</span>
             </div>
           </div>
         </div>
@@ -180,7 +185,7 @@ export default function TauraPage() {
           </span>
         </div>
         <p className="text-xs text-zinc-400">
-          Visualizing how the custom Gĩkũyũ BPE preserves phonemes and morphemes compared to fragmented English BPE:
+          Visualizing how the custom Gĩkũyũ BPE preserves phonemes and morphemes:
         </p>
         <div className="flex flex-wrap gap-2 pt-1">
           {sampleTokens.map((tok) => (

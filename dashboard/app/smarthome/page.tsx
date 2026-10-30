@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
-import { Home, Lock, Unlock, Lightbulb, Thermometer, Radio, Send, CheckCircle2, ShieldCheck } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Home, Lock, Unlock, Lightbulb, Thermometer, Radio, Send, RefreshCw, AlertCircle, CheckCircle2 } from "lucide-react";
+import { executeSmartHomeCommand, fetchSmartHomeDevices, SmartHomeActionResponse } from "@/lib/api";
 
 export default function SmartHomePage() {
   const [doorLocked, setDoorLocked] = useState(true);
@@ -10,68 +11,63 @@ export default function SmartHomePage() {
   const [temperature, setTemperature] = useState("22.5°C");
 
   const [commandInput, setCommandInput] = useState("Hinga mũrango wa nja");
-  const [lastLog, setLastLog] = useState<any>({
+  const [isExecuting, setIsExecuting] = useState(false);
+
+  const [lastLog, setLastLog] = useState<SmartHomeActionResponse>({
     action: "DOOR_LOCK",
-    gikuyuResponse: "Nĩ ndahinga mũrango wa nja wega. Ũgitĩri nĩ mwĩkĩre.",
-    englishResponse: "I have securely locked the exterior door.",
-    topic: "thitho/door/exterior",
+    response_gikuyu: "Nĩ ndahinga mũrango wa nja wega. Ũgitĩri nĩ mwĩkĩre.",
+    response_english: "I have securely locked the exterior door.",
+    status: "SUCCESS",
   });
 
-  const handleCommand = (cmdText?: string) => {
-    const text = cmdText || commandInput;
-    const lower = text.toLowerCase();
+  // Load device states on mount
+  useEffect(() => {
+    async function loadDevices() {
+      const devs = await fetchSmartHomeDevices();
+      if (devs["mũrango_wa_nja"]) {
+        setDoorLocked(devs["mũrango_wa_nja"].state === "LOCKED");
+      }
+      if (devs["tawa_wa_nyũmba"]) {
+        setMainLight(devs["tawa_wa_nyũmba"].state === "ON");
+      }
+      if (devs["tawa_wa_thome"]) {
+        setPorchLight(devs["tawa_wa_thome"].state === "ON");
+      }
+      if (devs["ũrugarĩ"]) {
+        setTemperature(devs["ũrugarĩ"].value || "22.5°C");
+      }
+    }
+    loadDevices();
+  }, []);
 
-    if (lower.includes("mũrango") || lower.includes("door")) {
-      if (lower.includes("hingũra") || lower.includes("open") || lower.includes("unlock")) {
-        setDoorLocked(false);
-        setLastLog({
-          action: "DOOR_UNLOCK",
-          gikuyuResponse: "Nĩ ndahingũra mũrango wa nja.",
-          englishResponse: "I have unlocked the exterior door.",
-          topic: "thitho/door/exterior",
-        });
-      } else {
-        setDoorLocked(true);
-        setLastLog({
-          action: "DOOR_LOCK",
-          gikuyuResponse: "Nĩ ndahinga mũrango wa nja wega. Ũgitĩri nĩ mwĩkĩre.",
-          englishResponse: "I have securely locked the exterior door.",
-          topic: "thitho/door/exterior",
-        });
-      }
-    } else if (lower.includes("tawa") || lower.includes("light")) {
-      if (lower.includes("horia") || lower.includes("off")) {
-        if (lower.includes("thome")) {
-          setPorchLight(false);
+  const handleCommand = async (cmdText?: string) => {
+    const text = cmdText || commandInput;
+    if (!text.trim()) return;
+
+    setIsExecuting(true);
+    try {
+      // Optimistic UI updates
+      const lower = text.toLowerCase();
+      if (lower.includes("mũrango") || lower.includes("door")) {
+        if (lower.includes("hingũra") || lower.includes("open") || lower.includes("unlock")) {
+          setDoorLocked(false);
         } else {
-          setMainLight(false);
+          setDoorLocked(true);
         }
-        setLastLog({
-          action: "LIGHT_OFF",
-          gikuyuResponse: "Tawa nĩ wahorio.",
-          englishResponse: "The light has been switched off.",
-          topic: "thitho/light/living_room",
-        });
-      } else {
-        if (lower.includes("thome")) {
-          setPorchLight(true);
+      } else if (lower.includes("tawa") || lower.includes("light")) {
+        if (lower.includes("horia") || lower.includes("off")) {
+          if (lower.includes("thome")) setPorchLight(false);
+          else setMainLight(false);
         } else {
-          setMainLight(true);
+          if (lower.includes("thome")) setPorchLight(true);
+          else setMainLight(true);
         }
-        setLastLog({
-          action: "LIGHT_ON",
-          gikuyuResponse: "Nĩ ndaria tawa. Ũtheri nĩ waingĩha.",
-          englishResponse: "I have turned on the light. The room is now illuminated.",
-          topic: "thitho/light/living_room",
-        });
       }
-    } else if (lower.includes("ũrugarĩ") || lower.includes("temperature")) {
-      setLastLog({
-        action: "TEMPERATURE_QUERY",
-        gikuyuResponse: `Ũrugarĩ wa nyũmba rĩu nĩ ${temperature}. Heho ndĩrĩ thĩinĩ.`,
-        englishResponse: `Current indoor temperature is ${temperature}. The room is comfortable.`,
-        topic: "thitho/sensor/temperature",
-      });
+
+      const res = await executeSmartHomeCommand(text);
+      setLastLog(res);
+    } finally {
+      setIsExecuting(false);
     }
   };
 
@@ -87,13 +83,13 @@ export default function SmartHomePage() {
             </h1>
           </div>
           <p className="text-xs text-zinc-400 mt-1">
-            Offline voice & text IoT controller executing natural Gĩkũyũ commands locally for ESP32 and Zigbee nodes.
+            Offline voice & text IoT controller executing natural Gĩkũyũ commands locally with outbox queue sync.
           </p>
         </div>
 
         <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-amber-950/70 border border-amber-800/60 text-xs font-mono text-amber-300">
           <Radio className="w-4 h-4 text-amber-400" />
-          <span>Local MQTT Broker: Connected</span>
+          <span>Local Node: MQTT Active</span>
         </div>
       </div>
 
@@ -115,7 +111,6 @@ export default function SmartHomePage() {
           </div>
           <button
             onClick={() => {
-              setDoorLocked(!doorLocked);
               handleCommand(doorLocked ? "Hingũra mũrango" : "Hinga mũrango");
             }}
             className="w-full py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 font-medium transition-colors"
@@ -140,7 +135,6 @@ export default function SmartHomePage() {
           </div>
           <button
             onClick={() => {
-              setMainLight(!mainLight);
               handleCommand(mainLight ? "Horia tawa" : "Aria tawa");
             }}
             className="w-full py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 font-medium transition-colors"
@@ -165,7 +159,6 @@ export default function SmartHomePage() {
           </div>
           <button
             onClick={() => {
-              setPorchLight(!porchLight);
               handleCommand(porchLight ? "Horia tawa wa thome" : "Aria tawa wa thome");
             }}
             className="w-full py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 font-medium transition-colors"
@@ -201,7 +194,7 @@ export default function SmartHomePage() {
       <div className="rounded-2xl border border-zinc-800 bg-[#0e140e] p-6 space-y-5 shadow-xl">
         <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
           <h2 className="text-base font-bold text-white">Voice & Text Command Simulator (Gĩkũyũ)</h2>
-          <span className="text-xs font-mono text-zinc-400">Edge NLU Parser</span>
+          <span className="text-xs font-mono text-zinc-400">FastAPI Edge Bridge</span>
         </div>
 
         <div className="flex gap-2">
@@ -214,9 +207,14 @@ export default function SmartHomePage() {
           />
           <button
             onClick={() => handleCommand()}
+            disabled={isExecuting}
             className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs flex items-center gap-2 shadow"
           >
-            <Send className="w-3.5 h-3.5" />
+            {isExecuting ? (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Send className="w-3.5 h-3.5" />
+            )}
             <span>Send Command</span>
           </button>
         </div>
@@ -251,12 +249,20 @@ export default function SmartHomePage() {
               <span className="text-xs font-mono text-amber-400 uppercase font-semibold">
                 Action: {lastLog.action}
               </span>
-              <span className="text-xs font-mono text-zinc-500">MQTT: {lastLog.topic}</span>
+              {lastLog.queuedOffline ? (
+                <span className="text-xs font-mono text-amber-300 flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5" /> Queued in Outbox
+                </span>
+              ) : (
+                <span className="text-xs font-mono text-emerald-400 flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Executed on Bridge
+                </span>
+              )}
             </div>
 
             <div className="space-y-1">
-              <p className="text-sm font-bold text-white">{lastLog.gikuyuResponse}</p>
-              <p className="text-xs text-zinc-400">{lastLog.englishResponse}</p>
+              <p className="text-sm font-bold text-white">{lastLog.response_gikuyu}</p>
+              <p className="text-xs text-zinc-400">{lastLog.response_english}</p>
             </div>
           </div>
         )}
