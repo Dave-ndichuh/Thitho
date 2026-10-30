@@ -16,13 +16,29 @@ class TestTauraMugambo(unittest.TestCase):
         cls.tts = ThithoTTSEngine()
 
     def test_bidirectional_translation(self):
-        # Kikuyu to English
+        # Kikuyu to English lemma
         kik_to_eng = self.translator.to_english("mũrĩmi")
-        self.assertIn("cultivator", kik_to_eng["translated_text"].lower())
+        self.assertTrue(
+            "farmer" in kik_to_eng["translated_text"].lower()
+            or "cultivator" in kik_to_eng["translated_text"].lower()
+        )
+
+        # Complex agglutinative sentence
+        complex_res = self.translator.to_english("Mũndũ ũrĩa mwega nĩ arathimĩtwo")
+        self.assertIn("blessed", complex_res["translated_text"].lower())
+
+        # Conversational greeting
+        greet_res = self.translator.to_english("Ũhoro waku mũrata wakwa?")
+        self.assertIn("friend", greet_res["translated_text"].lower())
 
         # English to Kikuyu
         eng_to_kik = self.translator.to_gikuyu("door")
         self.assertIn("mũrango", eng_to_kik["translated_text"].lower())
+
+        # English intent to Kikuyu
+        intent_res = self.translator.to_gikuyu("I want to buy food today")
+        self.assertIn("kũgũra", intent_res["translated_text"].lower())
+        self.assertIn("irio", intent_res["translated_text"].lower())
 
     def test_acoustic_tonal_mapping(self):
         profile = self.acoustic_mapper.map_tonal_profile("Mũrĩmi")

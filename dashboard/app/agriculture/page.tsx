@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Sprout, CloudRain, ShieldCheck, AlertCircle, Sparkles, RefreshCw, HardDrive, Cpu } from "lucide-react";
-import { executeCropDiagnosis, fetchAgriculturalSeasons, AgriDiagnosisResponse } from "@/lib/api";
+import { Sprout, CloudRain, ShieldCheck, AlertCircle, Sparkles, RefreshCw, HardDrive, Cpu, Volume2 } from "lucide-react";
+import { executeCropDiagnosis, fetchAgriculturalSeasons, AgriDiagnosisResponse, speakAloud } from "@/lib/api";
 
 export default function AgriculturePage() {
   const [selectedCrop, setSelectedCrop] = useState("mbembe");
@@ -178,16 +178,36 @@ export default function AgriculturePage() {
 
               <div className="space-y-2 pt-2">
                 <div className="p-3 rounded-lg bg-zinc-900/80 border border-zinc-800 space-y-1">
-                  <span className="text-[11px] font-mono text-amber-400 uppercase block font-semibold">
-                    Treatment in Gĩkũyũ:
-                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-mono text-amber-400 uppercase font-semibold">
+                      Treatment in Gĩkũyũ:
+                    </span>
+                    <button
+                      onClick={() => speakAloud(diagnosis.treatment_gikuyu, "gikuyu")}
+                      className="px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 text-emerald-300 text-[11px] flex items-center gap-1 transition"
+                      title="Listen aloud to Gĩkũyũ advice"
+                    >
+                      <Volume2 className="w-3 h-3" />
+                      <span>Listen (Mũgambo)</span>
+                    </button>
+                  </div>
                   <p className="text-xs text-zinc-200">{diagnosis.treatment_gikuyu}</p>
                 </div>
 
                 <div className="p-3 rounded-lg bg-zinc-900/40 border border-zinc-800 space-y-1">
-                  <span className="text-[11px] font-mono text-zinc-400 uppercase block font-semibold">
-                    English Guidance:
-                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-mono text-zinc-400 uppercase font-semibold">
+                      English Guidance:
+                    </span>
+                    <button
+                      onClick={() => speakAloud(diagnosis.treatment_english, "english")}
+                      className="px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[11px] flex items-center gap-1 transition"
+                      title="Listen aloud to English guidance"
+                    >
+                      <Volume2 className="w-3 h-3" />
+                      <span>Listen</span>
+                    </button>
+                  </div>
                   <p className="text-xs text-zinc-400">{diagnosis.treatment_english}</p>
                 </div>
               </div>

@@ -27,6 +27,7 @@ import {
   executeSTT,
   fetchAudioCorpus,
   getAudioClipUrl,
+  speakAloud,
   TTSResponse,
   STTResponse,
   SyllablePitch,
@@ -241,21 +242,23 @@ export default function MugamboPage() {
 
   // Audio Playback Handler for Synthesized Voice
   const togglePlayAudio = () => {
-    if (!audioUrl && !ttsResult) return;
-
-    if (ttsAudioRef.current) {
+    if (ttsAudioRef.current && audioUrl) {
       if (isPlayingAudio) {
         ttsAudioRef.current.pause();
         setIsPlayingAudio(false);
       } else {
-        ttsAudioRef.current.play().catch(() => {
-          // If browser blocked autoplay or base64 audio failed, play tones via Web Audio API
-          playSynthesizedTone();
-        });
-        setIsPlayingAudio(true);
+        ttsAudioRef.current
+          .play()
+          .then(() => {
+            setIsPlayingAudio(true);
+          })
+          .catch((err) => {
+            console.warn("WAV stream blocked by browser policy, vocalizing via SpeechSynthesis:", err);
+            speakAloud(ttsInput, "gikuyu");
+          });
       }
     } else {
-      playSynthesizedTone();
+      speakAloud(ttsInput, "gikuyu");
     }
   };
 
@@ -471,7 +474,7 @@ export default function MugamboPage() {
             />
           </div>
 
-          <div className="flex items-center gap-3 pt-1">
+          <div className="flex items-center gap-2.5 flex-wrap pt-1">
             <button
               onClick={() => handleSynthesize()}
               disabled={isSynthesizing || !ttsInput.trim()}
@@ -479,6 +482,15 @@ export default function MugamboPage() {
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
               <span>{isSynthesizing ? "Synthesizing Waveform..." : "Synthesize Voice"}</span>
+            </button>
+
+            <button
+              onClick={() => speakAloud(ttsInput, "gikuyu")}
+              className="px-4 py-2.5 rounded-xl bg-purple-800/80 hover:bg-purple-700 text-purple-200 border border-purple-600/40 font-semibold text-xs flex items-center gap-2 transition shadow active:scale-95"
+              title="Speak directly using device speakers"
+            >
+              <Volume2 className="w-3.5 h-3.5 text-purple-300" />
+              <span>Speak Aloud (Browser Voice)</span>
             </button>
 
             {ttsResult && (
@@ -511,22 +523,37 @@ export default function MugamboPage() {
             )}
           </div>
 
-          {/* Hidden audio element for WAV playback */}
+          {/* Visible HTML5 Audio Player */}
           {audioUrl && (
-            <audio
-              ref={ttsAudioRef}
-              src={audioUrl}
-              onEnded={() => {
-                setIsPlayingAudio(false);
-                setPlaybackProgress(0);
-              }}
-              onTimeUpdate={(e) => {
-                const audio = e.currentTarget;
-                if (audio.duration > 0) {
-                  setPlaybackProgress(audio.currentTime / audio.duration);
-                }
-              }}
-            />
+            <div className="p-4 rounded-xl bg-zinc-900/90 border border-zinc-800 space-y-2.5 shadow-lg">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-mono text-zinc-300 font-semibold flex items-center gap-1.5">
+                  <Volume2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Synthesized Gĩkũyũ Waveform Player</span>
+                </span>
+                <span className="font-mono text-emerald-400 text-[11px] bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/40">
+                  {ttsResult?.byte_size ? `${Math.round(ttsResult.byte_size / 1024)} KB` : "16kHz PCM"}
+                </span>
+              </div>
+              <audio
+                ref={ttsAudioRef}
+                controls
+                className="w-full h-10 rounded-lg accent-emerald-500"
+                src={audioUrl}
+                onPlay={() => setIsPlayingAudio(true)}
+                onPause={() => setIsPlayingAudio(false)}
+                onEnded={() => {
+                  setIsPlayingAudio(false);
+                  setPlaybackProgress(0);
+                }}
+                onTimeUpdate={(e) => {
+                  const audio = e.currentTarget;
+                  if (audio.duration > 0) {
+                    setPlaybackProgress(audio.currentTime / audio.duration);
+                  }
+                }}
+              />
+            </div>
           )}
         </div>
 
@@ -688,19 +715,35 @@ export default function MugamboPage() {
                       <span>{clip.duration_sec || 3.2}s</span>
                     </div>
 
-                    <div className="flex items-center gap-2 pt-1">
+                    <div className="flex items-center gap-2 pt-1 flex-wrap">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           if (clipAudioRef.current) {
                             clipAudioRef.current.src = getAudioClipUrl(clip.id);
-                            clipAudioRef.current.play().catch(() => {});
+                            clipAudioRef.current.play().catch(() => {
+                              speakAloud(clip.text, "gikuyu");
+                            });
+                          } else {
+                            speakAloud(clip.text, "gikuyu");
                           }
                         }}
-                        className="px-3 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold flex items-center gap-1.5 transition"
+                        className="px-3 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold flex items-center gap-1.5 transition active:scale-95"
                       >
-                        <Play className="w-3 h-3 fill-current" />
-                        <span>Play Audio</span>
+                        <Play className="w-3 h-3 fill-current text-emerald-400" />
+                        <span>Play Stream</span>
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          speakAloud(clip.text, "gikuyu");
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 text-purple-300 text-xs font-semibold flex items-center gap-1 transition active:scale-95"
+                        title="Vocalize clip aloud"
+                      >
+                        <Volume2 className="w-3 h-3" />
+                        <span>Speak</span>
                       </button>
 
                       <button

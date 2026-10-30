@@ -1,23 +1,36 @@
 """
 Thitho Mũgambo: Text-to-Speech (TTS) Synthesizer
 Synthesizes speech audio waveforms preserving Gĩkũyũ vowel phonemes and tonal pitch inflections.
+Uses local vocal speech synthesis with fallback to tonal acoustic formant generation.
 Generates broadcast-compliant 16kHz PCM WAV files runnable fully offline on edge devices.
 """
 
 import io
+import logging
 import math
+import os
 import struct
+import tempfile
 import wave
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 from .acoustic_mapper import AcousticMapper
 
+logger = logging.getLogger(__name__)
+
+try:
+    import pyttsx3
+    HAS_PYTTSX3 = True
+except ImportError:
+    pyttsx3 = None
+    HAS_PYTTSX3 = False
+
 
 class ThithoTTSEngine:
     """
-    Offline acoustic speech synthesizer for the Gĩkũyũ language.
-    Produces clean tonal speech audio without requiring commercial cloud speech APIs.
+    Offline acoustic and vocal speech synthesizer for the Gĩkũyũ language.
+    Produces clean audible human speech audio without requiring commercial cloud speech APIs.
     """
 
     def __init__(self, sample_rate: int = 16000):
@@ -26,13 +39,64 @@ class ThithoTTSEngine:
 
     def synthesize_wav_bytes(self, text: str) -> bytes:
         """Synthesize Gĩkũyũ speech audio as in-memory WAV bytes."""
+        if not text or not text.strip():
+            return self._empty_wav()
+
+        # 1. Attempt natural vocal speech synthesis via pyttsx3
+        if HAS_PYTTSX3:
+            try:
+                vocal_wav = self._synthesize_vocal(text)
+                if vocal_wav and len(vocal_wav) > 1000:
+                    return vocal_wav
+            except Exception as e:
+                logger.warning(f"pyttsx3 synthesis error: {e}")
+
+        # 2. Formant acoustic synthesizer fallback
+        return self._synthesize_formants(text)
+
+    def _synthesize_vocal(self, text: str) -> bytes:
+        """Synthesize real spoken speech using local TTS runtime."""
+        # Convert Gĩkũyũ 7-vowel diacritics to phonetic vocal targets for clarity
+        phonetic_text = (
+            text.replace("ĩ", "ee")
+            .replace("Ĩ", "Ee")
+            .replace("ũ", "oo")
+            .replace("Ũ", "Oo")
+            .replace("ng'", "ng")
+            .replace("c", "ch")
+            .replace("C", "Ch")
+        )
+
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+            tmp_path = tmp.name
+
+        try:
+            engine = pyttsx3.init()
+            engine.setProperty("rate", 145)  # Natural African speech cadence
+            engine.setProperty("volume", 1.0)
+            engine.save_to_file(phonetic_text, tmp_path)
+            engine.runAndWait()
+
+            if os.path.exists(tmp_path) and os.path.getsize(tmp_path) > 0:
+                with open(tmp_path, "rb") as f:
+                    return f.read()
+        finally:
+            if os.path.exists(tmp_path):
+                try:
+                    os.unlink(tmp_path)
+                except Exception:
+                    pass
+
+        return b""
+
+    def _synthesize_formants(self, text: str) -> bytes:
+        """Generate harmonic tonal formant waveform."""
         profile = self.acoustic_mapper.map_tonal_profile(text)
         syllables = profile["syllables"]
 
         if not syllables:
             return self._empty_wav()
 
-        # Generate audio samples
         samples = []
         syllable_duration = 0.22  # seconds per syllable
         samples_per_syllable = int(self.sample_rate * syllable_duration)
@@ -41,13 +105,10 @@ class ThithoTTSEngine:
 
         for idx, syll in enumerate(syllables):
             f0 = syll["target_f0"]
-            # Apply slight intonation curve per syllable
             for i in range(samples_per_syllable):
                 t = i / samples_per_syllable
-                # Envelope: Hann-window shaped amplitude to prevent clicking
                 envelope = math.sin(math.pi * t)
 
-                # Formant harmonics (F0 + 2nd + 3rd harmonic for vocal realism)
                 freq = f0 * (1.0 + 0.05 * math.sin(math.pi * t))
                 phase_inc = 2 * math.pi * freq / self.sample_rate
                 current_phase += phase_inc
@@ -59,15 +120,13 @@ class ThithoTTSEngine:
                 )
 
                 sample_val = int(val * envelope * 16000)
-                # Clamp 16-bit signed integer
                 sample_val = max(-32767, min(32767, sample_val))
                 samples.append(sample_val)
 
-            # Brief 30ms inter-syllable pause
+            # 30ms pause
             for _ in range(int(self.sample_rate * 0.03)):
                 samples.append(0)
 
-        # Pack into WAV
         byte_io = io.BytesIO()
         with wave.open(byte_io, "wb") as wav_file:
             wav_file.setnchannels(1)  # Mono

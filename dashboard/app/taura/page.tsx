@@ -1,8 +1,16 @@
 "use client";
 
 import React, { useState } from "react";
-import { Languages, ArrowLeftRight, Copy, Check, Sparkles, Cpu, RefreshCw, HardDrive } from "lucide-react";
-import { executeTranslation, TranslationResponse } from "@/lib/api";
+import { Languages, ArrowLeftRight, Copy, Check, Sparkles, Cpu, RefreshCw, HardDrive, Volume2 } from "lucide-react";
+import { executeTranslation, TranslationResponse, speakAloud } from "@/lib/api";
+
+const PRESET_QUERIES = [
+  { label: "Blessed Person", kik: "Mũndũ ũrĩa mwega nĩ arathimĩtwo.", eng: "The good person is blessed." },
+  { label: "Farming (Mbembe)", kik: "Mũrĩmi nĩ ahandaga mbembe rĩrĩa mbura yagia.", eng: "The farmer plants maize when the rain comes." },
+  { label: "Greeting (Ũhoro)", kik: "Ũhoro waku mũrata wakwa?", eng: "How are you my friend?" },
+  { label: "Smart Home", kik: "Hinga mũrango wa nja.", eng: "Close the exterior door." },
+  { label: "Gratitude", kik: "Nĩ wega mũno mũrata wakwa.", eng: "Thank you very much my friend." },
+];
 
 export default function TauraPage() {
   const [sourceLang, setSourceLang] = useState<"kik_Latn" | "eng_Latn">("kik_Latn");
@@ -23,12 +31,14 @@ export default function TauraPage() {
     setOutputText(inputText);
   };
 
-  const handleTranslate = async () => {
-    if (!inputText.trim()) return;
+  const handleTranslate = async (overrideText?: string, overrideSrc?: "kik_Latn" | "eng_Latn") => {
+    const text = (overrideText || inputText).trim();
+    if (!text) return;
+    const src = overrideSrc || sourceLang;
     setIsTranslating(true);
     try {
-      const targetLang = sourceLang === "kik_Latn" ? "eng_Latn" : "kik_Latn";
-      const res = await executeTranslation(inputText, sourceLang, targetLang);
+      const targetLang = src === "kik_Latn" ? "eng_Latn" : "kik_Latn";
+      const res = await executeTranslation(text, src, targetLang);
       setOutputText(res.translated_text);
       setTranslationMeta({
         confidence: res.confidence,
@@ -44,6 +54,10 @@ export default function TauraPage() {
     navigator.clipboard.writeText(outputText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSpeak = (text: string, lang: "kik_Latn" | "eng_Latn") => {
+    speakAloud(text, lang === "kik_Latn" ? "gikuyu" : "english");
   };
 
   // Sub-word tokenization preview
@@ -91,6 +105,24 @@ export default function TauraPage() {
         </div>
       </div>
 
+      {/* Quick Test Preset Phrases */}
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <span className="text-[11px] font-mono text-zinc-500 uppercase mr-1">Quick Test:</span>
+        {PRESET_QUERIES.map((p, i) => (
+          <button
+            key={i}
+            onClick={() => {
+              const targetText = sourceLang === "kik_Latn" ? p.kik : p.eng;
+              setInputText(targetText);
+              handleTranslate(targetText, sourceLang);
+            }}
+            className="text-[11px] px-2.5 py-1 rounded-lg bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 hover:border-emerald-600/60 transition shadow-sm active:scale-95"
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+
       {/* Translation Boxes */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Input */}
@@ -100,8 +132,17 @@ export default function TauraPage() {
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               placeholder="Enter text to translate..."
-              className="w-full h-44 bg-[#0e140e] border border-zinc-800 rounded-2xl p-4 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-emerald-500 resize-none font-medium leading-relaxed"
+              className="w-full h-44 bg-[#0e140e] border border-zinc-800 rounded-2xl p-4 pr-12 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-emerald-500 resize-none font-medium leading-relaxed"
             />
+            {inputText && (
+              <button
+                onClick={() => handleSpeak(inputText, sourceLang)}
+                className="absolute top-3 right-3 p-2 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 hover:text-emerald-400 transition shadow"
+                title={`Listen to ${sourceLang === "kik_Latn" ? "Gĩkũyũ" : "English"}`}
+              >
+                <Volume2 className="w-4 h-4" />
+              </button>
+            )}
           </div>
 
           {/* Virtual Diacritics Keypad */}
@@ -123,9 +164,9 @@ export default function TauraPage() {
           )}
 
           <button
-            onClick={handleTranslate}
+            onClick={() => handleTranslate()}
             disabled={isTranslating}
-            className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-950/40"
+            className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-950/40 active:scale-95"
           >
             {isTranslating ? (
               <>
@@ -143,15 +184,26 @@ export default function TauraPage() {
 
         {/* Output */}
         <div className="space-y-3 flex flex-col justify-between">
-          <div className="relative h-44 bg-[#0e140e]/70 border border-zinc-800 rounded-2xl p-4 text-sm text-zinc-200 font-medium leading-relaxed overflow-y-auto">
+          <div className="relative h-44 bg-[#0e140e]/70 border border-zinc-800 rounded-2xl p-4 pr-24 text-sm text-zinc-200 font-medium leading-relaxed overflow-y-auto">
             {outputText}
-            <button
-              onClick={copyToClipboard}
-              className="absolute top-3 right-3 p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors"
-              title="Copy translation"
-            >
-              {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-            </button>
+            <div className="absolute top-3 right-3 flex items-center gap-1.5">
+              {outputText && (
+                <button
+                  onClick={() => handleSpeak(outputText, sourceLang === "kik_Latn" ? "eng_Latn" : "kik_Latn")}
+                  className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-emerald-400 transition"
+                  title={`Listen to ${sourceLang === "kik_Latn" ? "English" : "Gĩkũyũ"}`}
+                >
+                  <Volume2 className="w-4 h-4" />
+                </button>
+              )}
+              <button
+                onClick={copyToClipboard}
+                className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors"
+                title="Copy translation"
+              >
+                {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
 
           {/* Model & Latency Telemetry */}

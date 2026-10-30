@@ -19,6 +19,7 @@ import {
   Terminal,
   Activity,
   Zap,
+  Volume2,
 } from "lucide-react";
 import {
   executeSmartHomeCommand,
@@ -26,6 +27,7 @@ import {
   toggleSmartHomeDevice,
   fetchMqttLogs,
   createSmartHomeWebSocket,
+  speakAloud,
   SmartHomeActionResponse,
   MqttLogItem,
 } from "@/lib/api";
@@ -491,7 +493,16 @@ export default function SmartHomePage() {
                 </div>
 
                 <div className="space-y-1">
-                  <p className="text-sm font-bold text-white">{lastLog.response_gikuyu}</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-bold text-white">{lastLog.response_gikuyu}</p>
+                    <button
+                      onClick={() => speakAloud(lastLog.response_gikuyu, "gikuyu")}
+                      className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-amber-400 transition"
+                      title="Listen to Gĩkũyũ smart home response"
+                    >
+                      <Volume2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                   <p className="text-xs text-zinc-400">{lastLog.response_english}</p>
                 </div>
               </div>

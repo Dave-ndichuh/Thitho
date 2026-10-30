@@ -326,6 +326,397 @@ GIKUYU_LEXICON_SEEDS: List[Dict[str, Any]] = [
             }
         ],
     },
+    {
+        "lemma": "irio",
+        "phonetic": "ee-ree-oh",
+        "tonal_pattern": "L-H-L",
+        "part_of_speech": "noun",
+        "noun_class": "Class 8",
+        "etymology": "Food, meal, traditional mashed dish of potatoes, corn, and greens",
+        "definitions": [
+            {
+                "definition": "Food, meal, provisions, traditional Gĩkũyũ cuisine",
+                "source": "UKC Lexicon",
+                "sense_num": 1,
+                "example_gikuyu": "Nĩ ngũgũra irio cia hwaĩ-inĩ thoko-inĩ.",
+                "example_english": "I will buy food for the evening at the market.",
+            }
+        ],
+    },
+    {
+        "lemma": "maĩ",
+        "phonetic": "mah-ee",
+        "tonal_pattern": "L-H",
+        "part_of_speech": "noun",
+        "noun_class": "Class 6",
+        "etymology": "From Proto-Bantu *-yɪ́jɪ (water)",
+        "definitions": [
+            {
+                "definition": "Water, liquid, moisture, rainwater",
+                "source": "UKC Lexicon",
+                "sense_num": 1,
+                "example_gikuyu": "Maĩ nĩ ma bata mũno kũrĩ mĩtĩ na nyamũ.",
+                "example_english": "Water is of paramount importance to trees and animals.",
+            }
+        ],
+    },
+    {
+        "lemma": "wĩra",
+        "phonetic": "wee-rah",
+        "tonal_pattern": "H-L",
+        "part_of_speech": "noun",
+        "noun_class": "Class 14",
+        "etymology": "Work, labor, profession, task",
+        "definitions": [
+            {
+                "definition": "Work, labor, occupation, employment",
+                "source": "UKC Lexicon",
+                "sense_num": 1,
+                "example_gikuyu": "Wĩra wa mũrĩmi nĩ kũrĩma na kũhanda.",
+                "example_english": "The work of a farmer is to cultivate and plant.",
+            }
+        ],
+    },
+    {
+        "lemma": "mũthenya",
+        "phonetic": "mo-theh-nyah",
+        "tonal_pattern": "L-L-H",
+        "part_of_speech": "noun",
+        "noun_class": "Class 3",
+        "etymology": "Day, daytime, daylight period",
+        "definitions": [
+            {
+                "definition": "Day, daytime, daylight hours",
+                "source": "UKC Lexicon",
+                "sense_num": 1,
+                "example_gikuyu": "Mũthenya ũyũ nĩ mwega mũno.",
+                "example_english": "This day is very pleasant.",
+            }
+        ],
+    },
+    {
+        "lemma": "ũmũthĩ",
+        "phonetic": "oo-moo-thee",
+        "tonal_pattern": "L-H-L",
+        "part_of_speech": "noun",
+        "noun_class": "Class 14",
+        "etymology": "Today, present day",
+        "definitions": [
+            {
+                "definition": "Today, on this day",
+                "source": "UKC Lexicon",
+                "sense_num": 1,
+                "example_gikuyu": "Ũmũthĩ nĩ tũgũthiĩ thoko.",
+                "example_english": "Today we shall go to the market.",
+            }
+        ],
+    },
+    {
+        "lemma": "rũciũ",
+        "phonetic": "roo-chee-oo",
+        "tonal_pattern": "L-H",
+        "part_of_speech": "noun",
+        "noun_class": "Class 11",
+        "etymology": "Tomorrow, the coming day",
+        "definitions": [
+            {
+                "definition": "Tomorrow, next day",
+                "source": "UKC Lexicon",
+                "sense_num": 1,
+                "example_gikuyu": "Tũonane rũciũ mũgũnda-inĩ.",
+                "example_english": "See you tomorrow in the field.",
+            }
+        ],
+    },
+    {
+        "lemma": "ira",
+        "phonetic": "ee-rah",
+        "tonal_pattern": "L-L",
+        "part_of_speech": "noun",
+        "noun_class": "Class 14",
+        "etymology": "Yesterday",
+        "definitions": [
+            {
+                "definition": "Yesterday",
+                "source": "UKC Lexicon",
+                "sense_num": 1,
+                "example_gikuyu": "Mbura nĩ yarire ira hwaĩ-inĩ.",
+                "example_english": "Rain fell yesterday in the evening.",
+            }
+        ],
+    },
+    {
+        "lemma": "gũra",
+        "phonetic": "goo-rah",
+        "tonal_pattern": "L-H",
+        "part_of_speech": "verb",
+        "noun_class": "Verb",
+        "etymology": "Buy, purchase, acquire with currency",
+        "definitions": [
+            {
+                "definition": "To buy, purchase, acquire goods",
+                "source": "UKC Lexicon",
+                "sense_num": 1,
+                "example_gikuyu": "Nĩ ngũgũra mbembe na njahĩ.",
+                "example_english": "I am buying maize and black beans.",
+            }
+        ],
+    },
+    {
+        "lemma": "handa",
+        "phonetic": "hahn-dah",
+        "tonal_pattern": "L-H",
+        "part_of_speech": "verb",
+        "noun_class": "Verb",
+        "etymology": "Plant seeds, sow, establish seedlings",
+        "definitions": [
+            {
+                "definition": "To plant, sow seeds into the soil",
+                "source": "UKC Lexicon",
+                "sense_num": 1,
+                "example_gikuyu": "Handa mbembe rĩrĩa tĩĩri ũrĩ mũnoru.",
+                "example_english": "Plant maize when the soil is fertile and moist.",
+            }
+        ],
+    },
+    {
+        "lemma": "enda",
+        "phonetic": "eh-ndah",
+        "tonal_pattern": "L-H",
+        "part_of_speech": "verb",
+        "noun_class": "Verb",
+        "etymology": "Want, love, like, desire",
+        "definitions": [
+            {
+                "definition": "To want, desire, love, care for",
+                "source": "UKC Lexicon",
+                "sense_num": 1,
+                "example_gikuyu": "Nĩ ngũenda gũthiĩ mũciĩ.",
+                "example_english": "I want to go home.",
+            }
+        ],
+    },
+    {
+        "lemma": "thiĩ",
+        "phonetic": "thee-ee",
+        "tonal_pattern": "L-H",
+        "part_of_speech": "verb",
+        "noun_class": "Verb",
+        "etymology": "Go, travel, depart",
+        "definitions": [
+            {
+                "definition": "To go, depart, travel",
+                "source": "UKC Lexicon",
+                "sense_num": 1,
+                "example_gikuyu": "Thiĩ na thayũ na ũcoke wega.",
+                "example_english": "Go with peace and return well.",
+            }
+        ],
+    },
+    {
+        "lemma": "ũka",
+        "phonetic": "oo-kah",
+        "tonal_pattern": "L-H",
+        "part_of_speech": "verb",
+        "noun_class": "Verb",
+        "etymology": "Come, arrive, approach",
+        "definitions": [
+            {
+                "definition": "To come, arrive",
+                "source": "UKC Lexicon",
+                "sense_num": 1,
+                "example_gikuyu": "Ũka gũkũ nyũmba-inĩ.",
+                "example_english": "Come here into the house.",
+            }
+        ],
+    },
+    {
+        "lemma": "thoko",
+        "phonetic": "thoh-koh",
+        "tonal_pattern": "H-L",
+        "part_of_speech": "noun",
+        "noun_class": "Class 9/10",
+        "etymology": "Market, marketplace, trading center",
+        "definitions": [
+            {
+                "definition": "Market, commercial center for trading produce",
+                "source": "UKC Lexicon",
+                "sense_num": 1,
+                "example_gikuyu": "Thoko nĩ ĩyũrĩte andũ na mbembe.",
+                "example_english": "The market is filled with people and maize.",
+            }
+        ],
+    },
+    {
+        "lemma": "wega",
+        "phonetic": "weh-gah",
+        "tonal_pattern": "L-H",
+        "part_of_speech": "adverb",
+        "noun_class": "Descriptor",
+        "etymology": "Good, well, fine, pleasant",
+        "definitions": [
+            {
+                "definition": "Goodness, well, fine, quality",
+                "source": "UKC Lexicon",
+                "sense_num": 1,
+                "example_gikuyu": "Nĩ wega mũno gũcera gũkũ.",
+                "example_english": "It is very good to visit here.",
+            }
+        ],
+    },
+    {
+        "lemma": "mũno",
+        "phonetic": "moo-noh",
+        "tonal_pattern": "L-H",
+        "part_of_speech": "adverb",
+        "noun_class": "Descriptor",
+        "etymology": "Very, very much, exceedingly, a lot",
+        "definitions": [
+            {
+                "definition": "Very, exceedingly, abundantly",
+                "source": "UKC Lexicon",
+                "sense_num": 1,
+                "example_gikuyu": "Nĩ ndakena mũno nĩ kũmuona.",
+                "example_english": "I am very delighted to see you.",
+            }
+        ],
+    },
+    {
+        "lemma": "ũhoro",
+        "phonetic": "oo-hoh-roh",
+        "tonal_pattern": "L-L-H",
+        "part_of_speech": "noun",
+        "noun_class": "Class 14",
+        "etymology": "News, information, story, matter, greeting",
+        "definitions": [
+            {
+                "definition": "News, information, greeting, message",
+                "source": "UKC Lexicon",
+                "sense_num": 1,
+                "example_gikuyu": "Ũhoro waku mũrĩmi?",
+                "example_english": "How are you, farmer? (What is your news?)",
+            }
+        ],
+    },
+    {
+        "lemma": "mwana",
+        "phonetic": "mwah-nah",
+        "tonal_pattern": "L-H",
+        "part_of_speech": "noun",
+        "noun_class": "Class 1",
+        "etymology": "Child, infant, offspring",
+        "definitions": [
+            {
+                "definition": "Child, boy, girl, offspring",
+                "source": "UKC Lexicon",
+                "sense_num": 1,
+                "example_gikuyu": "Mwana ũcio nĩ arathoma wega.",
+                "example_english": "That child is studying well.",
+            }
+        ],
+    },
+    {
+        "lemma": "mũrata",
+        "phonetic": "moo-rah-tah",
+        "tonal_pattern": "L-L-H",
+        "part_of_speech": "noun",
+        "noun_class": "Class 1",
+        "etymology": "Friend, ally, close acquaintance",
+        "definitions": [
+            {
+                "definition": "Friend, companion, companion in work",
+                "source": "UKC Lexicon",
+                "sense_num": 1,
+                "example_gikuyu": "Mũrata wakwa nĩ arokire gũcera.",
+                "example_english": "My friend came to visit.",
+            }
+        ],
+    },
+    {
+        "lemma": "marigũ",
+        "phonetic": "mah-ree-goo",
+        "tonal_pattern": "L-H-L",
+        "part_of_speech": "noun",
+        "noun_class": "Class 6",
+        "etymology": "Bananas, plantains",
+        "definitions": [
+            {
+                "definition": "Bananas, cooked or ripe plantains",
+                "source": "UKC Lexicon",
+                "sense_num": 1,
+                "example_gikuyu": "Marigũ macio nĩ meega kũruga.",
+                "example_english": "Those bananas are good for cooking.",
+            }
+        ],
+    },
+    {
+        "lemma": "cai",
+        "phonetic": "chah-ee",
+        "tonal_pattern": "L-H",
+        "part_of_speech": "noun",
+        "noun_class": "Class 9/10",
+        "etymology": "Tea, prepared tea beverage",
+        "definitions": [
+            {
+                "definition": "Tea, hot brewed tea with milk",
+                "source": "UKC Lexicon",
+                "sense_num": 1,
+                "example_gikuyu": "Nyua cai ũyũ ũrĩ mũhiũ.",
+                "example_english": "Drink this hot tea.",
+            }
+        ],
+    },
+    {
+        "lemma": "thayũ",
+        "phonetic": "thah-yoo",
+        "tonal_pattern": "L-H",
+        "part_of_speech": "noun",
+        "noun_class": "Class 14",
+        "etymology": "Peace, tranquility, harmony, health",
+        "definitions": [
+            {
+                "definition": "Peace, harmony, tranquility in homestead",
+                "source": "UKC Lexicon",
+                "sense_num": 1,
+                "example_gikuyu": "Mũciĩ ũrĩ na thayũ nĩ ũtheremaga.",
+                "example_english": "A homestead with peace prospers.",
+            }
+        ],
+    },
+    {
+        "lemma": "taũra",
+        "phonetic": "tah-oo-rah",
+        "tonal_pattern": "L-H-L",
+        "part_of_speech": "verb",
+        "noun_class": "Verb",
+        "etymology": "Translate, interpret, elucidate meaning",
+        "definitions": [
+            {
+                "definition": "To translate, interpret from one language to another",
+                "source": "Thitho Lexicon",
+                "sense_num": 1,
+                "example_gikuyu": "Taũra rũthiomi rũrũ kũrĩ andũ aitũ.",
+                "example_english": "Translate this language for our people.",
+            }
+        ],
+    },
+    {
+        "lemma": "mũgambo",
+        "phonetic": "moo-gah-mboh",
+        "tonal_pattern": "L-H-L",
+        "part_of_speech": "noun",
+        "noun_class": "Class 3",
+        "etymology": "Voice, sound, acoustic tone, spoken utterance",
+        "definitions": [
+            {
+                "definition": "Voice, vocal sound, speech, spoken acoustic signal",
+                "source": "UKC Lexicon",
+                "sense_num": 1,
+                "example_gikuyu": "Mũgambo waku nĩ ũraiguĩka wega mũno.",
+                "example_english": "Your voice is heard very clearly.",
+            }
+        ],
+    },
 ]
 
 # Multi-Domain Parallel Sentences (Gĩkũyũ <-> English)
@@ -455,6 +846,135 @@ PARALLEL_SENTENCE_SEEDS: List[Dict[str, Any]] = [
         "domain": "proverbs",
         "source": "Benson_Thimo",
         "split": "test",
+        "quality_score": 1.0,
+    },
+    # Daily Living & Conversational
+    {
+        "gikuyu_text": "Nĩ ngũgũra irio mũthenya ũyũ.",
+        "english_text": "I am buying food today.",
+        "domain": "general",
+        "source": "Thitho-Conversational",
+        "split": "train",
+        "quality_score": 1.0,
+    },
+    {
+        "gikuyu_text": "Nĩ ngũenda irio.",
+        "english_text": "I want food.",
+        "domain": "general",
+        "source": "Thitho-Conversational",
+        "split": "train",
+        "quality_score": 1.0,
+    },
+    {
+        "gikuyu_text": "Ũhoro waku mũrĩmi?",
+        "english_text": "How are you, farmer?",
+        "domain": "general",
+        "source": "Thitho-Conversational",
+        "split": "train",
+        "quality_score": 1.0,
+    },
+    {
+        "gikuyu_text": "Nĩ wega mũno kũrĩ inyuĩ nyũmba.",
+        "english_text": "Thank you very much to you all in the house.",
+        "domain": "general",
+        "source": "Thitho-Conversational",
+        "split": "train",
+        "quality_score": 1.0,
+    },
+    {
+        "gikuyu_text": "Nĩ ngũenda gũthiĩ thoko kũgũra mbembe na njahĩ.",
+        "english_text": "I want to go to the market to buy maize and black beans.",
+        "domain": "general",
+        "source": "Thitho-Conversational",
+        "split": "train",
+        "quality_score": 1.0,
+    },
+    {
+        "gikuyu_text": "Mũciĩ nĩ kwega rĩrĩa andũ marĩ na thayũ.",
+        "english_text": "Home is pleasant when people are at peace.",
+        "domain": "general",
+        "source": "Thitho-Conversational",
+        "split": "train",
+        "quality_score": 1.0,
+    },
+    {
+        "gikuyu_text": "Aria tawa wa nyũmba nĩgũo tũhote gũthoma.",
+        "english_text": "Turn on the house light so that we can read.",
+        "domain": "smarthome",
+        "source": "Thitho-Conversational",
+        "split": "train",
+        "quality_score": 1.0,
+    },
+    {
+        "gikuyu_text": "Hinga mũrango nĩ ũndũ wa heho ya hwaĩ-inĩ.",
+        "english_text": "Close the door because of the evening cold.",
+        "domain": "smarthome",
+        "source": "Thitho-Conversational",
+        "split": "train",
+        "quality_score": 1.0,
+    },
+    {
+        "gikuyu_text": "Mbura yagia wega marigũ na ngwacĩ nĩikũra.",
+        "english_text": "When it rains well, the bananas and sweet potatoes will grow.",
+        "domain": "agriculture",
+        "source": "Thitho-Conversational",
+        "split": "train",
+        "quality_score": 1.0,
+    },
+    {
+        "gikuyu_text": "Tũonane rũciũ mũgũnda-inĩ.",
+        "english_text": "See you tomorrow in the field.",
+        "domain": "general",
+        "source": "Thitho-Conversational",
+        "split": "train",
+        "quality_score": 1.0,
+    },
+    {
+        "gikuyu_text": "Koma wega, ũcoke ũũkĩre na hinya.",
+        "english_text": "Sleep well, and awake with strength.",
+        "domain": "general",
+        "source": "Thitho-Conversational",
+        "split": "train",
+        "quality_score": 1.0,
+    },
+    {
+        "gikuyu_text": "Wĩ mwega?",
+        "english_text": "Are you well?",
+        "domain": "general",
+        "source": "Thitho-Conversational",
+        "split": "train",
+        "quality_score": 1.0,
+    },
+    {
+        "gikuyu_text": "Nĩ mwega mũno.",
+        "english_text": "I am very well.",
+        "domain": "general",
+        "source": "Thitho-Conversational",
+        "split": "train",
+        "quality_score": 1.0,
+    },
+    {
+        "gikuyu_text": "Mũthenya mwega.",
+        "english_text": "Good day.",
+        "domain": "general",
+        "source": "Thitho-Conversational",
+        "split": "train",
+        "quality_score": 1.0,
+    },
+    {
+        "gikuyu_text": "Rũciũ nĩ ngũthiĩ mũgũnda.",
+        "english_text": "Tomorrow I will go to the farm.",
+        "domain": "agriculture",
+        "source": "Thitho-Conversational",
+        "split": "train",
+        "quality_score": 1.0,
+    },
+    {
+        "gikuyu_text": "Maĩ nĩ ma bata mũno kũrĩ mĩtĩ.",
+        "english_text": "Water is of great importance to trees and plants.",
+        "domain": "agriculture",
+        "source": "Thitho-Conversational",
+        "split": "train",
         "quality_score": 1.0,
     },
 ]

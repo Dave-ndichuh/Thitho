@@ -380,9 +380,14 @@ export async function executeTranslation(
     };
   }
 
-  // 1. Check IndexedDB persistent cache
+  // 1. Check IndexedDB persistent cache (ignore stale placeholders)
   const cached = await getCachedTranslation(cleanText, sourceLang, targetLang);
-  if (cached) {
+  if (
+    cached &&
+    cached.translatedText &&
+    !cached.translatedText.includes("Thitho Taũra NLLB Ready") &&
+    !cached.translatedText.startsWith("[")
+  ) {
     return {
       source_text: cleanText,
       translated_text: cached.translatedText,
@@ -734,3 +739,47 @@ export function createSmartHomeWebSocket(
     },
   };
 }
+
+// -------------------------------------------------------------
+// 7. Universal Audio Vocalization Helper (Browser SpeechSynthesis)
+// -------------------------------------------------------------
+
+export function speakAloud(text: string, lang: "gikuyu" | "english" = "gikuyu") {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+    console.warn("speechSynthesis not supported in this environment");
+    return;
+  }
+
+  // Cancel any currently playing speech to avoid overlap
+  window.speechSynthesis.cancel();
+
+  // Phonetic adaptation for Bantu / Gĩkũyũ 7-vowel phonemes
+  let vocalText = text;
+  if (lang === "gikuyu") {
+    vocalText = text
+      .replace(/ĩ/g, "ee")
+      .replace(/Ĩ/g, "Ee")
+      .replace(/ũ/g, "oo")
+      .replace(/Ũ/g, "Oo")
+      .replace(/ng'/g, "ng")
+      .replace(/c/g, "ch")
+      .replace(/C/g, "Ch");
+  }
+
+  const utterance = new SpeechSynthesisUtterance(vocalText);
+  utterance.rate = 0.92; // Clear, deliberate cadence
+  utterance.pitch = 1.0;
+  utterance.volume = 1.0;
+
+  // Prefer English/Swahili voice if available
+  const voices = window.speechSynthesis.getVoices();
+  const selectedVoice = voices.find(
+    (v) => v.lang.startsWith("en") || v.lang.startsWith("sw")
+  );
+  if (selectedVoice) {
+    utterance.voice = selectedVoice;
+  }
+
+  window.speechSynthesis.speak(utterance);
+}
+
